@@ -33,16 +33,16 @@ The wall must be done before the Infill element. So In Cura the Option infill_be
 
 ## Postprocessing Options ##
 
--Gradient Distance :  Distance of the gradient (max to min) in mm",
+- Gradient Distance :  Distance of the gradient (max to min) in mm",
 - Gradient Discretization : Only applicable for linear infills; number of segments within the gradient(segmentLength=gradientThickness / gradientDiscretization); use sensible values to not overload",
--Max flow : Maximum extrusion flow
--Min flow : Minimum extrusion flow
--Short distance flow : Extrusion flow for short distance < 2x Gradient distance
--Gradual speed : Activate also Gradual Speed linked to the gradual flow
--Max over speed : Maximum over speed factor
--Min over speed : Minimum over speed factor
--Extruder Id : Define extruder Id in case of multi extruders
--Test with outer wall : "Test the gradiant with the outer wall segments
+- Max flow : Maximum extrusion flow
+- Min flow : Minimum extrusion flow
+- Short distance flow : Extrusion flow for short distance < 2x Gradient distance
+- Gradual speed : Activate also Gradual Speed linked to the gradual flow
+- Max over speed : Maximum over speed factor
+- Min over speed : Minimum over speed factor
+- Extruder Id : Define extruder Id in case of multi extruders
+- Test with outer wall : "Test the gradiant with the outer wall segments
 
 
 A new Flow Value for short distance (Linear move < 2 x Gradient distance) added to the standard GradientInfill script.
