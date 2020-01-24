@@ -11,7 +11,8 @@ Version: 1.0
 5axes modification : 22/01/2020  -> Add dedicate flow for short distance
 5axes modification : 22/01/2020  -> Add gradiant speed
 5axes modification : 23/01/2020  -> Test param infill_before_walls to false
-5axes modification : 23/01/2020  -> Option to test with Inner Wall or Outer Wall  
+5axes modification : 23/01/2020  -> Option to test with Inner Wall or Outer Wall
+5axes modification : 24/01/2020  -> Option to reduce the speed at the segment end
 
 """
 
@@ -27,7 +28,7 @@ from UM.Message import Message
 from UM.i18n import i18nCatalog
 catalog = i18nCatalog("cura")
 
-__version__ = '1.5'
+__version__ = '1.6'
 
 
 Point2D = namedtuple('Point2D', 'x y')
@@ -81,6 +82,22 @@ def dist(segment: Segment, point: Point2D) -> float:
 
     return (dx * dx + dy * dy) ** 0.5
 
+def reduce_speed(point1: Point2D, point2: Point2D, point3: Point2D ) -> float:
+    """Calculate tje scalar product.
+
+    Args:
+        point1 (Point2D): first point
+        point2 (Point2D): second point
+        point3 (Point2D): second point
+
+    Returns:
+        float: the scalar product
+    """
+
+    middlePoint = Point2D((point1.x + point2.x) / 2, (point1.y + point2.y) / 2)
+    produitscalaire=(middlePoint.x - point1.x)*(middlePoint.x - point3.x) + (middlePoint.y - point1.y)*(middlePoint.y - point3.y)
+    
+    return produitscalaire
 
 def get_points_distance(point1: Point2D, point2: Point2D) -> float:
     """Calculate the euclidean distance between two points.
@@ -366,6 +383,23 @@ class GradientInfill(Script):
                     "description": "Test the gradiant with the outer wall segments",
                     "type": "bool",
                     "default_value": false
+                },
+                "reduceendspeed":
+                {
+                    "label": "Reduce end speed",
+                    "description": "Reduce the speed at the end of the segment for a better plastic extrusion",
+                    "type": "bool",
+                    "default_value": false,
+                    "enabled": "gradualspeed"
+                },
+                "reducefactor":
+                {
+                    "label": "Reducing speed factor",
+                    "description": "Factur of speed reduction at the end of the segment",
+                    "unit": "%",
+                    "type": "int",
+                    "default_value": 40,
+                    "enabled": "reduceendspeed"
                 }
             }
         }"""
@@ -393,9 +427,9 @@ class GradientInfill(Script):
         min_over_speed_factor = min_over_speed_factor /100
 
         test_outer_wall= bool(self.getSettingValueByKey("testouterwall"))
-        
-
-        
+        reduce_end_speed= bool(self.getSettingValueByKey("reduceendspeed"))
+        reduce_factor = float(self.getSettingValueByKey("reducefactor"))
+        reduce_factor = 1 - (reduce_factor /100)
         
         #   machine_extruder_count
         extruder_count=Application.getInstance().getGlobalContainerStack().getProperty("machine_extruder_count", "value")
@@ -522,6 +556,14 @@ class GradientInfill(Script):
                                                 segmentFeed = current_feed * max_over_speed_factor
                                             if segmentFeed < (current_feed * min_over_speed_factor):
                                                 segmentFeed = current_feed * min_over_speed_factor
+
+                                            if reduce_end_speed:
+                                                modi = reduce_speed(savePosition, currentPosition, segmentEnd)
+                                                if modi < 0: #
+                                                    # Logger.log('d', 'Org : ' + str(segmentFeed) )
+                                                    segmentFeed = segmentFeed * reduce_factor
+                                                    # Logger.log('d', 'Modi : ' + str(segmentFeed) )
+                                                
                                             stringFeed = " F{}".format(int(segmentFeed))
 
                                     else:
@@ -548,8 +590,12 @@ class GradientInfill(Script):
                                 if segmentFeed < (current_feed * min_over_speed_factor):
                                     segmentFeed = current_feed * min_over_speed_factor
                                 if gradual_speed:
+                                    # Last segment need to reduce ?
+                                    if reduce_end_speed:
+                                        segmentFeed = segmentFeed * reduce_factor
                                     stringFeed = " F{}".format(int(segmentFeed))
-                    
+
+ 
                                 new_Line=new_Line+get_extrusion_command(currentPosition.x,currentPosition.y,segmentLengthRatio * extrusionLength * max_flow / 100) + stringFeed # + " ; Last line"
                                 
                                 lines[line_index] = new_Line
@@ -606,6 +652,7 @@ class GradientInfill(Script):
                 #
                 if "X" in currentLine and "Y" in currentLine and ("G1" in currentLine or "G0" in currentLine):
                     lastPosition = getXY(currentLine)
+                    savePosition = lastPosition
 
             final_lines = "\n".join(lines)
             data[layer_index] = final_lines
