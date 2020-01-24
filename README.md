@@ -16,6 +16,8 @@ Further instructions can be found on my website: http://cnckitchen.com/blog/grad
 
 # GradientInfill.py (Cura postprocessor PlugIn script)
 
+**Version : 1.5
+
 GradientInfill.py Posprocessing Script for Cura PlugIn. Save the file in the _C:\Program Files\Ultimaker Cura **X.X**\plugins\PostProcessingPlugin\scripts_ directory.
 
 Extrusion mode in Cura must be set in relative mode. If it's not the case an error message will be raised in Cura.
